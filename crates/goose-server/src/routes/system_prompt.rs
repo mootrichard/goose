@@ -66,9 +66,13 @@ pub async fn list_system_prompts(
     verify_secret_key(&headers, &state)?;
 
     let manager = SystemPromptManager::new();
-    manager.initialize().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    manager
+        .initialize()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let prompts = manager.list_prompts().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let prompts = manager
+        .list_prompts()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(SystemPromptsResponse { prompts }))
 }
@@ -91,15 +95,15 @@ pub async fn get_system_prompt(
     verify_secret_key(&headers, &state)?;
 
     let manager = SystemPromptManager::new();
-    manager.initialize().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    manager
+        .initialize()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     // Try to find by ID first, then by name
-    let prompt = manager.get_prompt(&id)
+    let prompt = manager
+        .get_prompt(&id)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-        .or_else(|| {
-            manager.get_prompt_by_name(&id)
-                .unwrap_or(None)
-        })
+        .or_else(|| manager.get_prompt_by_name(&id).unwrap_or(None))
         .ok_or(StatusCode::NOT_FOUND)?;
 
     Ok(Json(SystemPromptResponse { prompt }))
@@ -124,7 +128,9 @@ pub async fn create_system_prompt(
     verify_secret_key(&headers, &state)?;
 
     let manager = SystemPromptManager::new();
-    manager.initialize().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    manager
+        .initialize()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let mut prompt = SystemPrompt::new(request.name, request.content);
 
@@ -144,10 +150,13 @@ pub async fn create_system_prompt(
         prompt = prompt.set_as_default();
     }
 
-    let created_prompt = manager.create_prompt(prompt)
+    let created_prompt = manager
+        .create_prompt(prompt)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(Json(SystemPromptResponse { prompt: created_prompt }))
+    Ok(Json(SystemPromptResponse {
+        prompt: created_prompt,
+    }))
 }
 
 /// Update an existing system prompt
@@ -171,9 +180,12 @@ pub async fn update_system_prompt(
     verify_secret_key(&headers, &state)?;
 
     let manager = SystemPromptManager::new();
-    manager.initialize().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    manager
+        .initialize()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let mut prompt = manager.get_prompt(&id)
+    let mut prompt = manager
+        .get_prompt(&id)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(StatusCode::NOT_FOUND)?;
 
@@ -197,10 +209,13 @@ pub async fn update_system_prompt(
         prompt.model_specific = Some(model);
     }
 
-    let updated_prompt = manager.update_prompt(&id, prompt)
+    let updated_prompt = manager
+        .update_prompt(&id, prompt)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    Ok(Json(SystemPromptResponse { prompt: updated_prompt }))
+    Ok(Json(SystemPromptResponse {
+        prompt: updated_prompt,
+    }))
 }
 
 /// Delete a system prompt
@@ -222,18 +237,19 @@ pub async fn delete_system_prompt(
     verify_secret_key(&headers, &state)?;
 
     let manager = SystemPromptManager::new();
-    manager.initialize().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    manager
+        .initialize()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    manager.delete_prompt(&id)
-        .map_err(|e| {
-            if e.to_string().contains("Cannot delete the default") {
-                StatusCode::BAD_REQUEST
-            } else if e.to_string().contains("not found") {
-                StatusCode::NOT_FOUND
-            } else {
-                StatusCode::INTERNAL_SERVER_ERROR
-            }
-        })?;
+    manager.delete_prompt(&id).map_err(|e| {
+        if e.to_string().contains("Cannot delete the default") {
+            StatusCode::BAD_REQUEST
+        } else if e.to_string().contains("not found") {
+            StatusCode::NOT_FOUND
+        } else {
+            StatusCode::INTERNAL_SERVER_ERROR
+        }
+    })?;
 
     Ok(Json("System prompt deleted successfully".to_string()))
 }
@@ -256,16 +272,17 @@ pub async fn set_default_system_prompt(
     verify_secret_key(&headers, &state)?;
 
     let manager = SystemPromptManager::new();
-    manager.initialize().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    manager
+        .initialize()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    manager.set_default_prompt(&id)
-        .map_err(|e| {
-            if e.to_string().contains("not found") {
-                StatusCode::NOT_FOUND
-            } else {
-                StatusCode::INTERNAL_SERVER_ERROR
-            }
-        })?;
+    manager.set_default_prompt(&id).map_err(|e| {
+        if e.to_string().contains("not found") {
+            StatusCode::NOT_FOUND
+        } else {
+            StatusCode::INTERNAL_SERVER_ERROR
+        }
+    })?;
 
     Ok(Json("Default system prompt set successfully".to_string()))
 }
@@ -288,9 +305,12 @@ pub async fn search_system_prompts(
     verify_secret_key(&headers, &state)?;
 
     let manager = SystemPromptManager::new();
-    manager.initialize().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    manager
+        .initialize()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let prompts = manager.search_by_tags(&request.tags)
+    let prompts = manager
+        .search_by_tags(&request.tags)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     Ok(Json(SystemPromptsResponse { prompts }))
@@ -313,9 +333,12 @@ pub async fn get_default_system_prompt(
     verify_secret_key(&headers, &state)?;
 
     let manager = SystemPromptManager::new();
-    manager.initialize().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    manager
+        .initialize()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let prompt = manager.get_default_prompt()
+    let prompt = manager
+        .get_default_prompt()
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(StatusCode::NOT_FOUND)?;
 
@@ -332,6 +355,9 @@ pub fn routes(state: Arc<AppState>) -> Router {
         .route("/system-prompts/{id}", get(get_system_prompt))
         .route("/system-prompts/{id}", put(update_system_prompt))
         .route("/system-prompts/{id}", delete(delete_system_prompt))
-        .route("/system-prompts/{id}/set-default", post(set_default_system_prompt))
+        .route(
+            "/system-prompts/{id}/set-default",
+            post(set_default_system_prompt),
+        )
         .with_state(state)
 }

@@ -28,7 +28,7 @@ impl PromptManager {
         let system_prompt_manager = SystemPromptManager::new();
         // Initialize prompts if needed
         let _ = system_prompt_manager.initialize();
-        
+
         PromptManager {
             system_prompt_override: None,
             system_prompt_id: None,
@@ -60,7 +60,11 @@ impl PromptManager {
     }
 
     /// Get fallback prompt using legacy embedded files
-    fn get_fallback_prompt(&self, model_to_use: &Option<String>, context: &HashMap<&str, Value>) -> String {
+    fn get_fallback_prompt(
+        &self,
+        model_to_use: &Option<String>,
+        context: &HashMap<&str, Value>,
+    ) -> String {
         if let Some(model) = model_to_use {
             // Use the fuzzy mapping to determine the prompt file, or fall back to legacy logic
             let prompt_file = Self::model_prompt_map(model);
@@ -73,8 +77,7 @@ impl PromptManager {
                 }
             }
         } else {
-            prompt_template::render_global_file("system.md", context)
-                .expect("Prompt should render")
+            prompt_template::render_global_file("system.md", context).expect("Prompt should render")
         }
     }
 
@@ -166,12 +169,13 @@ impl PromptManager {
         } else if let Some(prompt_id) = &self.system_prompt_id {
             // Use specific prompt by ID
             match self.system_prompt_manager.get_prompt(prompt_id) {
-                Ok(Some(prompt)) => {
-                    prompt_template::render_inline_once(&prompt.content, &context)
-                        .expect("Prompt should render")
-                }
+                Ok(Some(prompt)) => prompt_template::render_inline_once(&prompt.content, &context)
+                    .expect("Prompt should render"),
                 Ok(None) => {
-                    tracing::warn!("System prompt with ID {} not found, falling back to default", prompt_id);
+                    tracing::warn!(
+                        "System prompt with ID {} not found, falling back to default",
+                        prompt_id
+                    );
                     self.get_fallback_prompt(&model_to_use, &context)
                 }
                 Err(e) => {
@@ -182,10 +186,8 @@ impl PromptManager {
         } else if let Some(model) = &model_to_use {
             // Try to get model-specific prompt from SystemPromptManager
             match self.system_prompt_manager.get_prompt_for_model(model) {
-                Ok(Some(prompt)) => {
-                    prompt_template::render_inline_once(&prompt.content, &context)
-                        .expect("Prompt should render")
-                }
+                Ok(Some(prompt)) => prompt_template::render_inline_once(&prompt.content, &context)
+                    .expect("Prompt should render"),
                 Ok(None) | Err(_) => {
                     // Fall back to default prompt from SystemPromptManager
                     match self.system_prompt_manager.get_default_prompt() {
@@ -203,10 +205,8 @@ impl PromptManager {
         } else {
             // No model specified, use default from SystemPromptManager
             match self.system_prompt_manager.get_default_prompt() {
-                Ok(Some(prompt)) => {
-                    prompt_template::render_inline_once(&prompt.content, &context)
-                        .expect("Prompt should render")
-                }
+                Ok(Some(prompt)) => prompt_template::render_inline_once(&prompt.content, &context)
+                    .expect("Prompt should render"),
                 Ok(None) | Err(_) => {
                     // Final fallback to legacy embedded files
                     self.get_fallback_prompt(&model_to_use, &context)

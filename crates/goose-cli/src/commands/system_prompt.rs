@@ -17,7 +17,7 @@ pub enum SystemPromptCommand {
         /// Show only prompts with specific tags
         #[arg(long, value_delimiter = ',')]
         tags: Option<Vec<String>>,
-        
+
         /// Show detailed information
         #[arg(long, short)]
         detailed: bool,
@@ -26,27 +26,27 @@ pub enum SystemPromptCommand {
     Create {
         /// Name of the system prompt
         name: String,
-        
+
         /// Description of the system prompt
         #[arg(long, short)]
         description: Option<String>,
-        
+
         /// Content of the system prompt (can be - for stdin)
         #[arg(long, short)]
         content: Option<String>,
-        
+
         /// File to read content from
         #[arg(long, short)]
         file: Option<PathBuf>,
-        
+
         /// Tags to associate with the prompt
         #[arg(long, value_delimiter = ',')]
         tags: Option<Vec<String>>,
-        
+
         /// Model this prompt is optimized for
         #[arg(long)]
         model: Option<String>,
-        
+
         /// Set as the default system prompt
         #[arg(long)]
         default: bool,
@@ -55,7 +55,7 @@ pub enum SystemPromptCommand {
     Show {
         /// Prompt ID or name
         identifier: String,
-        
+
         /// Show the raw content without formatting
         #[arg(long)]
         raw: bool,
@@ -64,27 +64,27 @@ pub enum SystemPromptCommand {
     Update {
         /// Prompt ID or name
         identifier: String,
-        
+
         /// New name for the prompt
         #[arg(long)]
         name: Option<String>,
-        
+
         /// New description
         #[arg(long)]
         description: Option<String>,
-        
+
         /// New content (can be - for stdin)
         #[arg(long)]
         content: Option<String>,
-        
+
         /// File to read new content from
         #[arg(long)]
         file: Option<PathBuf>,
-        
+
         /// New tags (replaces existing tags)
         #[arg(long, value_delimiter = ',')]
         tags: Option<Vec<String>>,
-        
+
         /// New model specification
         #[arg(long)]
         model: Option<String>,
@@ -93,7 +93,7 @@ pub enum SystemPromptCommand {
     Delete {
         /// Prompt ID or name
         identifier: String,
-        
+
         /// Skip confirmation prompt
         #[arg(long, short)]
         yes: bool,
@@ -107,18 +107,18 @@ pub enum SystemPromptCommand {
     Import {
         /// File to import from
         file: PathBuf,
-        
+
         /// Name for the imported prompt
         name: String,
-        
+
         /// Description for the imported prompt
         #[arg(long)]
         description: Option<String>,
-        
+
         /// Tags to associate with the prompt
         #[arg(long, value_delimiter = ',')]
         tags: Option<Vec<String>>,
-        
+
         /// Model this prompt is optimized for
         #[arg(long)]
         model: Option<String>,
@@ -127,7 +127,7 @@ pub enum SystemPromptCommand {
     Export {
         /// Prompt ID or name
         identifier: String,
-        
+
         /// Output file path
         file: PathBuf,
     },
@@ -200,34 +200,40 @@ pub async fn handle_system_prompt_command(args: SystemPromptArgs) -> anyhow::Res
             model,
             default,
         } => {
-            let content = get_content(content, file).await?
-                .ok_or_else(|| anyhow::anyhow!("Content is required for creating a system prompt. Use --content or --file."))?;
-            
+            let content = get_content(content, file).await?.ok_or_else(|| {
+                anyhow::anyhow!(
+                    "Content is required for creating a system prompt. Use --content or --file."
+                )
+            })?;
+
             let mut prompt = SystemPrompt::new(name, content);
-            
+
             if let Some(desc) = description {
                 prompt = prompt.with_description(desc);
             }
-            
+
             if let Some(tags) = tags {
                 prompt = prompt.with_tags(tags);
             }
-            
+
             if let Some(model) = model {
                 prompt = prompt.with_model_specific(model);
             }
-            
+
             if default {
                 prompt = prompt.set_as_default();
             }
 
             let created_prompt = manager.create_prompt(prompt)?;
-            println!("Created system prompt: {} (ID: {})", created_prompt.name, created_prompt.id);
+            println!(
+                "Created system prompt: {} (ID: {})",
+                created_prompt.name, created_prompt.id
+            );
         }
 
         SystemPromptCommand::Show { identifier, raw } => {
             let prompt = find_prompt(&manager, &identifier)?;
-            
+
             if raw {
                 println!("{}", prompt.content);
             } else {
@@ -245,23 +251,23 @@ pub async fn handle_system_prompt_command(args: SystemPromptArgs) -> anyhow::Res
             model,
         } => {
             let mut prompt = find_prompt(&manager, &identifier)?;
-            
+
             if let Some(name) = name {
                 prompt.name = name;
             }
-            
+
             if let Some(description) = description {
                 prompt.description = Some(description);
             }
-            
+
             if let Some(content) = get_content(content, file).await? {
                 prompt.update_content(content);
             }
-            
+
             if let Some(tags) = tags {
                 prompt.tags = tags;
             }
-            
+
             if let Some(model) = model {
                 prompt.model_specific = Some(model);
             }
@@ -272,9 +278,12 @@ pub async fn handle_system_prompt_command(args: SystemPromptArgs) -> anyhow::Res
 
         SystemPromptCommand::Delete { identifier, yes } => {
             let prompt = find_prompt(&manager, &identifier)?;
-            
+
             if !yes {
-                println!("Are you sure you want to delete the system prompt '{}'? (y/N)", prompt.name);
+                println!(
+                    "Are you sure you want to delete the system prompt '{}'? (y/N)",
+                    prompt.name
+                );
                 let mut input = String::new();
                 std::io::stdin().read_line(&mut input)?;
                 if !input.trim().to_lowercase().starts_with('y') {
@@ -301,34 +310,44 @@ pub async fn handle_system_prompt_command(args: SystemPromptArgs) -> anyhow::Res
             model,
         } => {
             let mut prompt = manager.import_from_file(&file, name)?;
-            
+
             if let Some(desc) = description {
                 prompt.description = Some(desc);
             }
-            
+
             if let Some(tags) = tags {
                 prompt.tags = tags;
             }
-            
+
             if let Some(model) = model {
                 prompt.model_specific = Some(model);
             }
 
             let updated_prompt = manager.update_prompt(&prompt.id.clone(), prompt)?;
-            println!("Imported system prompt: {} (ID: {})", updated_prompt.name, updated_prompt.id);
+            println!(
+                "Imported system prompt: {} (ID: {})",
+                updated_prompt.name, updated_prompt.id
+            );
         }
 
         SystemPromptCommand::Export { identifier, file } => {
             let prompt = find_prompt(&manager, &identifier)?;
             manager.export_to_file(&prompt.id, &file)?;
-            println!("Exported system prompt '{}' to {}", prompt.name, file.display());
+            println!(
+                "Exported system prompt '{}' to {}",
+                prompt.name,
+                file.display()
+            );
         }
     }
 
     Ok(())
 }
 
-async fn get_content(content: Option<String>, file: Option<PathBuf>) -> anyhow::Result<Option<String>> {
+async fn get_content(
+    content: Option<String>,
+    file: Option<PathBuf>,
+) -> anyhow::Result<Option<String>> {
     match (content, file) {
         (Some(content), None) => {
             if content == "-" {
@@ -356,36 +375,35 @@ fn find_prompt(manager: &SystemPromptManager, identifier: &str) -> anyhow::Resul
     if let Ok(Some(prompt)) = manager.get_prompt(identifier) {
         return Ok(prompt);
     }
-    
+
     // Then try by name
     if let Ok(Some(prompt)) = manager.get_prompt_by_name(identifier) {
         return Ok(prompt);
     }
-    
+
     anyhow::bail!("System prompt '{}' not found", identifier);
 }
 
 fn print_prompt_details(prompt: &SystemPrompt) {
     println!("ID: {}", prompt.id);
     println!("Name: {}", prompt.name);
-    
+
     if let Some(description) = &prompt.description {
         println!("Description: {}", description);
     }
-    
+
     println!("Default: {}", if prompt.is_default { "Yes" } else { "No" });
-    
+
     if let Some(model) = &prompt.model_specific {
         println!("Model: {}", model);
     }
-    
+
     if !prompt.tags.is_empty() {
         println!("Tags: {}", prompt.tags.join(", "));
     }
-    
+
     println!("Created: {}", prompt.created_at.format("%Y-%m-%d %H:%M:%S"));
     println!("Updated: {}", prompt.updated_at.format("%Y-%m-%d %H:%M:%S"));
     println!("\nContent:");
     println!("{}", prompt.content);
 }
-

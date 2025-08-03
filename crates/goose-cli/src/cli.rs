@@ -634,7 +634,10 @@ enum Command {
     },
 
     /// Manage system prompts
-    #[command(about = "Manage system prompts and behaviors", visible_alias = "prompt")]
+    #[command(
+        about = "Manage system prompts and behaviors",
+        visible_alias = "prompt"
+    )]
     SystemPrompt {
         #[command(subcommand)]
         command: crate::commands::system_prompt::SystemPromptCommand,
@@ -791,7 +794,7 @@ pub async fn cli() -> Result<()> {
                         temperature: None,
                         system_prompt_id: Some(prompt),
                     });
-                    
+
                     let mut session: crate::Session = build_session(SessionBuilderConfig {
                         identifier: identifier.map(extract_identifier),
                         resume,
@@ -937,12 +940,12 @@ pub async fn cli() -> Result<()> {
                     .as_ref()
                     .and_then(|r| r.session_settings.clone())
                     .unwrap_or_default();
-                
+
                 // CLI system_prompt overrides recipe setting
                 if let Some(prompt) = system_prompt {
                     settings.system_prompt_id = Some(prompt);
                 }
-                
+
                 Some(settings)
             };
 
@@ -1071,7 +1074,10 @@ pub async fn cli() -> Result<()> {
             return Ok(());
         }
         Some(Command::SystemPrompt { command }) => {
-            handle_system_prompt_command(crate::commands::system_prompt::SystemPromptArgs { command }).await?;
+            handle_system_prompt_command(crate::commands::system_prompt::SystemPromptArgs {
+                command,
+            })
+            .await?;
             return Ok(());
         }
         Some(Command::Web { port, host, open }) => {

@@ -77,9 +77,9 @@ impl Default for SystemPromptManager {
 
 impl SystemPromptManager {
     pub fn new() -> Self {
-        use etcetera::{choose_app_strategy, AppStrategy};
         use crate::config::APP_STRATEGY;
-        
+        use etcetera::{choose_app_strategy, AppStrategy};
+
         let config_dir = choose_app_strategy(APP_STRATEGY.clone())
             .expect("goose requires a home dir")
             .config_dir();
@@ -122,10 +122,11 @@ impl SystemPromptManager {
 
         // Create GPT-4.1 specific prompt from embedded content
         let gpt4_content = include_str!("prompts/system_gpt_4.1.md");
-        let gpt4_prompt = SystemPrompt::new("GPT-4.1 Optimized".to_string(), gpt4_content.to_string())
-            .with_description("System prompt optimized for GPT-4.1 models".to_string())
-            .with_model_specific("gpt-4.1".to_string())
-            .with_tags(vec!["gpt-4".to_string(), "optimized".to_string()]);
+        let gpt4_prompt =
+            SystemPrompt::new("GPT-4.1 Optimized".to_string(), gpt4_content.to_string())
+                .with_description("System prompt optimized for GPT-4.1 models".to_string())
+                .with_model_specific("gpt-4.1".to_string())
+                .with_tags(vec!["gpt-4".to_string(), "optimized".to_string()]);
 
         prompts.insert(gpt4_prompt.id.clone(), gpt4_prompt);
 
@@ -188,17 +189,20 @@ impl SystemPromptManager {
     /// Get system prompt for a specific model
     pub fn get_prompt_for_model(&self, model: &str) -> Result<Option<SystemPrompt>, ConfigError> {
         let prompts = self.load_prompts()?;
-        
+
         // First try exact model match
-        if let Some(prompt) = prompts.values().find(|p| {
-            p.model_specific.as_ref().map_or(false, |m| m == model)
-        }) {
+        if let Some(prompt) = prompts
+            .values()
+            .find(|p| p.model_specific.as_ref().map_or(false, |m| m == model))
+        {
             return Ok(Some(prompt.clone()));
         }
 
         // Then try partial model match (e.g., "gpt-4" matches "gpt-4.1")
         if let Some(prompt) = prompts.values().find(|p| {
-            p.model_specific.as_ref().map_or(false, |m| model.contains(m) || m.contains(model))
+            p.model_specific
+                .as_ref()
+                .map_or(false, |m| model.contains(m) || m.contains(model))
         }) {
             return Ok(Some(prompt.clone()));
         }
@@ -216,11 +220,18 @@ impl SystemPromptManager {
     }
 
     /// Update an existing system prompt
-    pub fn update_prompt(&self, id: &str, updated_prompt: SystemPrompt) -> Result<SystemPrompt, ConfigError> {
+    pub fn update_prompt(
+        &self,
+        id: &str,
+        updated_prompt: SystemPrompt,
+    ) -> Result<SystemPrompt, ConfigError> {
         let mut prompts = self.load_prompts()?;
-        
+
         if !prompts.contains_key(id) {
-            return Err(ConfigError::NotFound(format!("System prompt with ID {} not found", id)));
+            return Err(ConfigError::NotFound(format!(
+                "System prompt with ID {} not found",
+                id
+            )));
         }
 
         // If this is being set as default, unset other defaults
@@ -238,17 +249,21 @@ impl SystemPromptManager {
     /// Delete a system prompt
     pub fn delete_prompt(&self, id: &str) -> Result<(), ConfigError> {
         let mut prompts = self.load_prompts()?;
-        
+
         if let Some(prompt) = prompts.get(id) {
             if prompt.is_default {
                 return Err(ConfigError::DeserializeError(
-                    "Cannot delete the default system prompt. Set another prompt as default first.".to_string()
+                    "Cannot delete the default system prompt. Set another prompt as default first."
+                        .to_string(),
                 ));
             }
         }
 
         if prompts.remove(id).is_none() {
-            return Err(ConfigError::NotFound(format!("System prompt with ID {} not found", id)));
+            return Err(ConfigError::NotFound(format!(
+                "System prompt with ID {} not found",
+                id
+            )));
         }
 
         self.save_prompts(&prompts)?;
@@ -258,9 +273,12 @@ impl SystemPromptManager {
     /// Set a prompt as the default
     pub fn set_default_prompt(&self, id: &str) -> Result<(), ConfigError> {
         let mut prompts = self.load_prompts()?;
-        
+
         if !prompts.contains_key(id) {
-            return Err(ConfigError::NotFound(format!("System prompt with ID {} not found", id)));
+            return Err(ConfigError::NotFound(format!(
+                "System prompt with ID {} not found",
+                id
+            )));
         }
 
         // Unset all defaults
@@ -282,32 +300,33 @@ impl SystemPromptManager {
         let prompts = self.load_prompts()?;
         let matching_prompts: Vec<SystemPrompt> = prompts
             .into_values()
-            .filter(|prompt| {
-                tags.iter().any(|tag| prompt.tags.contains(tag))
-            })
+            .filter(|prompt| tags.iter().any(|tag| prompt.tags.contains(tag)))
             .collect();
         Ok(matching_prompts)
     }
 
     /// Import system prompt from file
-    pub fn import_from_file(&self, file_path: &PathBuf, name: String) -> Result<SystemPrompt, ConfigError> {
-        let content = fs::read_to_string(file_path)
-            .map_err(|e| ConfigError::FileError(e))?;
-        
+    pub fn import_from_file(
+        &self,
+        file_path: &PathBuf,
+        name: String,
+    ) -> Result<SystemPrompt, ConfigError> {
+        let content = fs::read_to_string(file_path).map_err(|e| ConfigError::FileError(e))?;
+
         let prompt = SystemPrompt::new(name, content)
             .with_description(format!("Imported from {}", file_path.display()));
-        
+
         self.create_prompt(prompt)
     }
 
     /// Export system prompt to file
     pub fn export_to_file(&self, id: &str, file_path: &PathBuf) -> Result<(), ConfigError> {
-        let prompt = self.get_prompt(id)?
-            .ok_or_else(|| ConfigError::NotFound(format!("System prompt with ID {} not found", id)))?;
-        
-        fs::write(file_path, &prompt.content)
-            .map_err(|e| ConfigError::FileError(e))?;
-        
+        let prompt = self.get_prompt(id)?.ok_or_else(|| {
+            ConfigError::NotFound(format!("System prompt with ID {} not found", id))
+        })?;
+
+        fs::write(file_path, &prompt.content).map_err(|e| ConfigError::FileError(e))?;
+
         Ok(())
     }
 }
@@ -329,10 +348,10 @@ mod tests {
     #[test]
     fn test_create_and_get_prompt() {
         let (manager, _temp_dir) = create_test_manager();
-        
+
         let prompt = SystemPrompt::new("Test Prompt".to_string(), "Test content".to_string());
         let created = manager.create_prompt(prompt.clone()).unwrap();
-        
+
         assert_eq!(created.name, "Test Prompt");
         assert_eq!(created.content, "Test content");
 
@@ -346,7 +365,8 @@ mod tests {
         let (manager, _temp_dir) = create_test_manager();
         manager.initialize().unwrap();
 
-        let prompt1 = SystemPrompt::new("Prompt 1".to_string(), "Content 1".to_string()).set_as_default();
+        let prompt1 =
+            SystemPrompt::new("Prompt 1".to_string(), "Content 1".to_string()).set_as_default();
         let prompt2 = SystemPrompt::new("Prompt 2".to_string(), "Content 2".to_string());
 
         manager.create_prompt(prompt1).unwrap();
@@ -378,7 +398,10 @@ mod tests {
         let gpt4_result = manager.get_prompt_for_model("gpt-4o").unwrap().unwrap();
         assert_eq!(gpt4_result.name, "GPT-4");
 
-        let claude_result = manager.get_prompt_for_model("claude-3.5-sonnet").unwrap().unwrap();
+        let claude_result = manager
+            .get_prompt_for_model("claude-3.5-sonnet")
+            .unwrap()
+            .unwrap();
         assert_eq!(claude_result.name, "Claude");
     }
 }

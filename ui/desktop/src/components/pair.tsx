@@ -55,6 +55,7 @@ export default function Pair({
   const [shouldAutoSubmit, setShouldAutoSubmit] = useState(false);
   const [initialMessage, setInitialMessage] = useState<string | null>(null);
   const [isTransitioningFromHub, setIsTransitioningFromHub] = useState(false);
+  const [systemPromptId, setSystemPromptId] = useState<string | undefined>();
 
   // Get recipe configuration and parameter handling
   const {
@@ -87,6 +88,7 @@ export default function Pair({
   // Handle initial message from hub page
   useEffect(() => {
     const messageFromHub = location.state?.initialMessage;
+    const systemPromptIdFromHub = location.state?.systemPromptId;
 
     // Reset processing state when we have a new message from hub
     if (messageFromHub) {
@@ -106,6 +108,11 @@ export default function Pair({
         // Clear the location state to prevent re-processing
         window.history.replaceState({}, '', '/pair');
       }
+    }
+
+    // Store system prompt ID from hub
+    if (systemPromptIdFromHub !== undefined) {
+      setSystemPromptId(systemPromptIdFromHub);
     }
   }, [location.state, hasProcessedInitialInput, initialMessage, chat]);
 
@@ -195,6 +202,7 @@ export default function Pair({
         contentClassName={cn('pr-1 pb-10', (isMobile || sidebarState === 'collapsed') && 'pt-11')} // Use dynamic content class with mobile margin and sidebar state
         showPopularTopics={!isTransitioningFromHub} // Don't show popular topics while transitioning from Hub
         suppressEmptyState={isTransitioningFromHub} // Suppress all empty state content while transitioning from Hub
+        systemPromptId={systemPromptId} // Pass system prompt ID
       />
 
       {/* Recipe Parameter Modal */}

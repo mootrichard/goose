@@ -92,12 +92,14 @@ interface BaseChatProps {
   disableSearch?: boolean; // Disable search functionality (for Hub)
   showPopularTopics?: boolean; // Show popular chat topics in empty state (for Pair)
   suppressEmptyState?: boolean; // Suppress empty state content (for transitions)
+  systemPromptId?: string; // System prompt ID for chat sessions
 }
 
 function BaseChatContent({
   chat,
   setChat,
   setView,
+  systemPromptId,
   setIsGoosehintsModalOpen,
   enableLocalStorage = false,
   onMessageStreamFinish,
@@ -160,6 +162,7 @@ function BaseChatContent({
   } = useChatEngine({
     chat,
     setChat,
+    systemPromptId,
     onMessageStreamFinish: () => {
       // Auto-scroll to bottom when message stream finishes
       setTimeout(() => {

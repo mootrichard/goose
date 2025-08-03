@@ -6,5 +6,6 @@ pub mod project;
 pub mod recipe;
 pub mod schedule;
 pub mod session;
+pub mod system_prompt;
 pub mod update;
 pub mod web;

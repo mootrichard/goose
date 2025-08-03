@@ -214,6 +214,12 @@ impl Agent {
         *scheduler_service = Some(scheduler);
     }
 
+    /// Set the system prompt ID for this agent
+    pub async fn set_system_prompt_id(&self, prompt_id: String) {
+        let mut prompt_manager = self.prompt_manager.lock().await;
+        prompt_manager.set_system_prompt_id(prompt_id);
+    }
+
     /// Get a reference count clone to the provider
     pub async fn provider(&self) -> Result<Arc<dyn Provider>, anyhow::Error> {
         match &*self.provider.lock().await {
@@ -1352,6 +1358,7 @@ impl Agent {
             goose_provider: Some(provider_name.clone()),
             goose_model: Some(model_name.clone()),
             temperature: Some(model_config.temperature.unwrap_or(0.0)),
+            system_prompt_id: None,
         };
 
         let recipe = Recipe::builder()

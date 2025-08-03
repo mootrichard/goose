@@ -172,6 +172,7 @@ pub struct SessionSettings {
     pub goose_model: Option<String>,
     pub goose_provider: Option<String>,
     pub temperature: Option<f32>,
+    pub system_prompt_id: Option<String>,
 }
 
 pub async fn build_session(session_config: SessionBuilderConfig) -> Session {
@@ -251,6 +252,13 @@ pub async fn build_session(session_config: SessionBuilderConfig) -> Session {
             output::render_error(&format!("Failed to initialize agent: {}", e));
             process::exit(1);
         });
+
+    // Configure system prompt if specified
+    if let Some(settings) = &session_config.settings {
+        if let Some(prompt_id) = &settings.system_prompt_id {
+            agent.set_system_prompt_id(prompt_id.clone()).await;
+        }
+    }
 
     // Configure tool monitoring if max_tool_repetitions is set
     if let Some(max_repetitions) = session_config.max_tool_repetitions {

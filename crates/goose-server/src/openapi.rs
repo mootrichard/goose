@@ -325,7 +325,15 @@ derive_utoipa!(ResourceContents as ResourceContentsSchema);
         super::routes::schedule::sessions_handler,
         super::routes::recipe::create_recipe,
         super::routes::recipe::encode_recipe,
-        super::routes::recipe::decode_recipe
+        super::routes::recipe::decode_recipe,
+        super::routes::system_prompt::list_system_prompts,
+        super::routes::system_prompt::get_system_prompt,
+        super::routes::system_prompt::create_system_prompt,
+        super::routes::system_prompt::update_system_prompt,
+        super::routes::system_prompt::delete_system_prompt,
+        super::routes::system_prompt::set_default_system_prompt,
+        super::routes::system_prompt::search_system_prompts,
+        super::routes::system_prompt::get_default_system_prompt
     ),
     components(schemas(
         super::routes::config_management::UpsertConfigQuery,
@@ -400,6 +408,13 @@ derive_utoipa!(ResourceContents as ResourceContentsSchema);
         goose::agents::types::SuccessCheck,
         super::routes::agent::AddSubRecipesRequest,
         super::routes::agent::AddSubRecipesResponse,
+        super::routes::system_prompt::SystemPromptsResponse,
+        super::routes::system_prompt::SystemPromptResponse,
+        super::routes::system_prompt::CreateSystemPromptRequest,
+        super::routes::system_prompt::UpdateSystemPromptRequest,
+        super::routes::system_prompt::SetDefaultRequest,
+        super::routes::system_prompt::SearchPromptsRequest,
+        goose::system_prompts::SystemPrompt,
     ))
 )]
 pub struct ApiDoc;

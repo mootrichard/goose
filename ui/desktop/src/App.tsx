@@ -87,6 +87,9 @@ export type ViewOptions = {
   // Permission view options
   parentView?: View;
 
+  // Chat options
+  systemPromptId?: string;
+
   // Generic options
   [key: string]: unknown;
 };

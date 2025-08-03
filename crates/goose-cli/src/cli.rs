@@ -16,6 +16,7 @@ use crate::commands::schedule::{
     handle_schedule_sessions,
 };
 use crate::commands::session::{handle_session_list, handle_session_remove};
+use crate::commands::system_prompt::handle_system_prompt_command;
 use crate::logging::setup_logging;
 use crate::recipes::extract_from_cli::extract_recipe_info_from_cli;
 use crate::recipes::recipe::{explain_recipe, render_recipe_as_yaml};
@@ -381,6 +382,15 @@ enum Command {
             value_delimiter = ','
         )]
         builtins: Vec<String>,
+
+        /// System prompt to use for this session
+        #[arg(
+            long = "system-prompt",
+            value_name = "PROMPT_ID",
+            help = "Specify the system prompt to use by ID or name",
+            long_help = "Use a specific system prompt for this session. You can specify either the prompt ID or name. Use 'goose system-prompt list' to see available prompts."
+        )]
+        system_prompt: Option<String>,
     },
 
     /// Open the last project directory
@@ -605,6 +615,15 @@ enum Command {
             long_help = "Override the GOOSE_MODEL environment variable for this run. The model must be supported by the specified provider."
         )]
         model: Option<String>,
+
+        /// System prompt to use for this run
+        #[arg(
+            long = "system-prompt",
+            value_name = "PROMPT_ID",
+            help = "Specify the system prompt to use by ID or name",
+            long_help = "Use a specific system prompt for this run. You can specify either the prompt ID or name. Use 'goose system-prompt list' to see available prompts."
+        )]
+        system_prompt: Option<String>,
     },
 
     /// Recipe utilities for validation and deeplinking
@@ -612,6 +631,13 @@ enum Command {
     Recipe {
         #[command(subcommand)]
         command: RecipeCommand,
+    },
+
+    /// Manage system prompts
+    #[command(about = "Manage system prompts and behaviors", visible_alias = "prompt")]
+    SystemPrompt {
+        #[command(subcommand)]
+        command: crate::commands::system_prompt::SystemPromptCommand,
     },
 
     /// Manage scheduled jobs
@@ -725,6 +751,7 @@ pub async fn cli() -> Result<()> {
             remote_extensions,
             streamable_http_extensions,
             builtins,
+            system_prompt,
         }) => {
             return match command {
                 Some(SessionCommand::List {
@@ -758,6 +785,13 @@ pub async fn cli() -> Result<()> {
                 }
                 None => {
                     // Run session command by default
+                    let settings = system_prompt.map(|prompt| SessionSettings {
+                        goose_provider: None,
+                        goose_model: None,
+                        temperature: None,
+                        system_prompt_id: Some(prompt),
+                    });
+                    
                     let mut session: crate::Session = build_session(SessionBuilderConfig {
                         identifier: identifier.map(extract_identifier),
                         resume,
@@ -768,7 +802,7 @@ pub async fn cli() -> Result<()> {
                         builtins,
                         extensions_override: None,
                         additional_system_prompt: None,
-                        settings: None,
+                        settings,
                         provider: None,
                         model: None,
                         debug,
@@ -836,6 +870,7 @@ pub async fn cli() -> Result<()> {
             additional_sub_recipes,
             provider,
             model,
+            system_prompt,
         }) => {
             let (input_config, recipe_info) = match (instructions, input_text, recipe) {
                 (Some(file), _, _) if file == "-" => {
@@ -896,6 +931,21 @@ pub async fn cli() -> Result<()> {
                 }
             };
 
+            // Merge CLI system prompt with recipe settings
+            let settings = {
+                let mut settings = recipe_info
+                    .as_ref()
+                    .and_then(|r| r.session_settings.clone())
+                    .unwrap_or_default();
+                
+                // CLI system_prompt overrides recipe setting
+                if let Some(prompt) = system_prompt {
+                    settings.system_prompt_id = Some(prompt);
+                }
+                
+                Some(settings)
+            };
+
             let mut session = build_session(SessionBuilderConfig {
                 identifier: identifier.map(extract_identifier),
                 resume,
@@ -906,9 +956,7 @@ pub async fn cli() -> Result<()> {
                 builtins,
                 extensions_override: input_config.extensions_override,
                 additional_system_prompt: input_config.additional_system_prompt,
-                settings: recipe_info
-                    .as_ref()
-                    .and_then(|r| r.session_settings.clone()),
+                settings,
                 provider,
                 model,
                 debug,
@@ -1020,6 +1068,10 @@ pub async fn cli() -> Result<()> {
                     handle_list(&format, verbose)?;
                 }
             }
+            return Ok(());
+        }
+        Some(Command::SystemPrompt { command }) => {
+            handle_system_prompt_command(crate::commands::system_prompt::SystemPromptArgs { command }).await?;
             return Ok(());
         }
         Some(Command::Web { port, host, open }) => {

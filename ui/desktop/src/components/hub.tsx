@@ -27,6 +27,7 @@ import ChatInput from './ChatInput';
 import { generateSessionId } from '../sessions';
 import { ChatState } from '../types/chatState';
 import { ChatContextManagerProvider } from './context_management/ChatContextManager';
+import SystemPromptDisplay from './settings/system_prompts/SystemPromptDisplay';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { ChatType } from '../types/chat';
@@ -46,6 +47,11 @@ export default function Hub({
   setIsGoosehintsModalOpen: (isOpen: boolean) => void;
 }) {
   const [showGame, setShowGame] = useState(false);
+
+  // Handle opening settings to system prompt section
+  const handleOpenSettings = () => {
+    setView('settings', { section: 'chat' });
+  };
 
   // Handle chat input submission - create new chat and navigate to pair
   const handleSubmit = (e: React.FormEvent) => {
@@ -67,11 +73,16 @@ export default function Hub({
       // Update the PAIR chat state immediately to prevent flashing
       setPairChat(newPairChat);
 
+      // Get selected system prompt ID from localStorage
+      const savedSystemPromptId = localStorage.getItem('selectedSystemPromptId');
+      const systemPromptId = savedSystemPromptId && savedSystemPromptId !== 'undefined' ? savedSystemPromptId : undefined;
+
       // Navigate to pair page with the message to be submitted immediately
       // No delay needed since we're updating state synchronously
       setView('pair', {
         disableAnimation: true,
         initialMessage: combinedTextFromInput,
+        systemPromptId: systemPromptId,
       });
     }
 
@@ -85,6 +96,12 @@ export default function Hub({
         <div className="flex-1 flex flex-col mb-0.5">
           <SessionInsights />
         </div>
+
+        {/* System prompt display above chat input */}
+        <SystemPromptDisplay
+          className="px-4 pb-2"
+          onOpenSettings={handleOpenSettings}
+        />
 
         <ChatInput
           handleSubmit={handleSubmit}

@@ -6,12 +6,15 @@ use crate::agents::extension::ExtensionInfo;
 use crate::agents::router_tool_selector::RouterToolSelectionStrategy;
 use crate::agents::router_tools::{llm_search_tool_prompt, vector_search_tool_prompt};
 use crate::providers::base::get_current_model;
+use crate::system_prompts::SystemPromptManager;
 use crate::{config::Config, prompt_template};
 
 pub struct PromptManager {
     system_prompt_override: Option<String>,
+    system_prompt_id: Option<String>,
     system_prompt_extras: Vec<String>,
     current_date_timestamp: String,
+    system_prompt_manager: SystemPromptManager,
 }
 
 impl Default for PromptManager {
@@ -22,11 +25,17 @@ impl Default for PromptManager {
 
 impl PromptManager {
     pub fn new() -> Self {
+        let system_prompt_manager = SystemPromptManager::new();
+        // Initialize prompts if needed
+        let _ = system_prompt_manager.initialize();
+        
         PromptManager {
             system_prompt_override: None,
+            system_prompt_id: None,
             system_prompt_extras: Vec::new(),
             // Use the fixed current date time so that prompt cache can be used.
             current_date_timestamp: Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+            system_prompt_manager,
         }
     }
 
@@ -38,6 +47,35 @@ impl PromptManager {
     /// Override the system prompt with custom text
     pub fn set_system_prompt_override(&mut self, template: String) {
         self.system_prompt_override = Some(template);
+    }
+
+    /// Set system prompt by ID
+    pub fn set_system_prompt_id(&mut self, prompt_id: String) {
+        self.system_prompt_id = Some(prompt_id);
+    }
+
+    /// Get the system prompt manager for direct access
+    pub fn get_system_prompt_manager(&self) -> &SystemPromptManager {
+        &self.system_prompt_manager
+    }
+
+    /// Get fallback prompt using legacy embedded files
+    fn get_fallback_prompt(&self, model_to_use: &Option<String>, context: &HashMap<&str, Value>) -> String {
+        if let Some(model) = model_to_use {
+            // Use the fuzzy mapping to determine the prompt file, or fall back to legacy logic
+            let prompt_file = Self::model_prompt_map(model);
+            match prompt_template::render_global_file(prompt_file, context) {
+                Ok(prompt) => prompt,
+                Err(_) => {
+                    // Fall back to the standard system.md if model-specific one doesn't exist
+                    prompt_template::render_global_file("system.md", context)
+                        .expect("Prompt should render")
+                }
+            }
+        } else {
+            prompt_template::render_global_file("system.md", context)
+                .expect("Prompt should render")
+        }
     }
 
     /// Normalize a model name (replace - and / with _, lower case)
@@ -116,24 +154,64 @@ impl PromptManager {
         let model_to_use: Option<String> =
             get_current_model().or_else(|| model_name.map(|s| s.to_string()));
 
-        // Conditionally load the override prompt or the global system prompt
+        // Conditionally load the prompt in order of precedence:
+        // 1. Override prompt (inline string)
+        // 2. Specific prompt ID
+        // 3. Model-specific prompt from SystemPromptManager
+        // 4. Default prompt from SystemPromptManager
+        // 5. Legacy fallback to embedded files
         let base_prompt = if let Some(override_prompt) = &self.system_prompt_override {
             prompt_template::render_inline_once(override_prompt, &context)
                 .expect("Prompt should render")
-        } else if let Some(model) = &model_to_use {
-            // Use the fuzzy mapping to determine the prompt file, or fall back to legacy logic
-            let prompt_file = Self::model_prompt_map(model);
-            match prompt_template::render_global_file(prompt_file, &context) {
-                Ok(prompt) => prompt,
-                Err(_) => {
-                    // Fall back to the standard system.md if model-specific one doesn't exist
-                    prompt_template::render_global_file("system.md", &context)
+        } else if let Some(prompt_id) = &self.system_prompt_id {
+            // Use specific prompt by ID
+            match self.system_prompt_manager.get_prompt(prompt_id) {
+                Ok(Some(prompt)) => {
+                    prompt_template::render_inline_once(&prompt.content, &context)
                         .expect("Prompt should render")
+                }
+                Ok(None) => {
+                    tracing::warn!("System prompt with ID {} not found, falling back to default", prompt_id);
+                    self.get_fallback_prompt(&model_to_use, &context)
+                }
+                Err(e) => {
+                    tracing::error!("Error loading system prompt {}: {}", prompt_id, e);
+                    self.get_fallback_prompt(&model_to_use, &context)
+                }
+            }
+        } else if let Some(model) = &model_to_use {
+            // Try to get model-specific prompt from SystemPromptManager
+            match self.system_prompt_manager.get_prompt_for_model(model) {
+                Ok(Some(prompt)) => {
+                    prompt_template::render_inline_once(&prompt.content, &context)
+                        .expect("Prompt should render")
+                }
+                Ok(None) | Err(_) => {
+                    // Fall back to default prompt from SystemPromptManager
+                    match self.system_prompt_manager.get_default_prompt() {
+                        Ok(Some(prompt)) => {
+                            prompt_template::render_inline_once(&prompt.content, &context)
+                                .expect("Prompt should render")
+                        }
+                        Ok(None) | Err(_) => {
+                            // Final fallback to legacy embedded files
+                            self.get_fallback_prompt(&model_to_use, &context)
+                        }
+                    }
                 }
             }
         } else {
-            prompt_template::render_global_file("system.md", &context)
-                .expect("Prompt should render")
+            // No model specified, use default from SystemPromptManager
+            match self.system_prompt_manager.get_default_prompt() {
+                Ok(Some(prompt)) => {
+                    prompt_template::render_inline_once(&prompt.content, &context)
+                        .expect("Prompt should render")
+                }
+                Ok(None) | Err(_) => {
+                    // Final fallback to legacy embedded files
+                    self.get_fallback_prompt(&model_to_use, &context)
+                }
+            }
         };
 
         let mut system_prompt_extras = self.system_prompt_extras.clone();

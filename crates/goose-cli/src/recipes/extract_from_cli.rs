@@ -58,6 +58,7 @@ pub fn extract_recipe_info_from_cli(
             goose_provider: s.goose_provider,
             goose_model: s.goose_model,
             temperature: s.temperature,
+            system_prompt_id: s.system_prompt_id,
         }),
         sub_recipes: Some(all_sub_recipes),
         final_output_response: recipe.response,

@@ -1062,6 +1062,272 @@
           }
         ]
       }
+    },
+    "/system-prompts": {
+      "get": {
+        "tags": [
+          "super::routes::system_prompt"
+        ],
+        "summary": "Get all system prompts",
+        "operationId": "list_system_prompts",
+        "responses": {
+          "200": {
+            "description": "List of system prompts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemPromptsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "super::routes::system_prompt"
+        ],
+        "summary": "Create a new system prompt",
+        "operationId": "create_system_prompt",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSystemPromptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "System prompt created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemPromptResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/system-prompts/default": {
+      "get": {
+        "tags": [
+          "super::routes::system_prompt"
+        ],
+        "summary": "Get the default system prompt",
+        "operationId": "get_default_system_prompt",
+        "responses": {
+          "200": {
+            "description": "Default system prompt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemPromptResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No default system prompt found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/system-prompts/search": {
+      "post": {
+        "tags": [
+          "super::routes::system_prompt"
+        ],
+        "summary": "Search system prompts by tags",
+        "operationId": "search_system_prompts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchPromptsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Matching system prompts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemPromptsResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/system-prompts/{id}": {
+      "get": {
+        "tags": [
+          "super::routes::system_prompt"
+        ],
+        "summary": "Get a specific system prompt by ID",
+        "operationId": "get_system_prompt",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "System prompt details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemPromptResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "System prompt not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "super::routes::system_prompt"
+        ],
+        "summary": "Update an existing system prompt",
+        "operationId": "update_system_prompt",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSystemPromptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "System prompt updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemPromptResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "404": {
+            "description": "System prompt not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "super::routes::system_prompt"
+        ],
+        "summary": "Delete a system prompt",
+        "operationId": "delete_system_prompt",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "System prompt deleted successfully"
+          },
+          "400": {
+            "description": "Cannot delete default prompt"
+          },
+          "404": {
+            "description": "System prompt not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/system-prompts/{id}/set-default": {
+      "post": {
+        "tags": [
+          "super::routes::system_prompt"
+        ],
+        "summary": "Set a system prompt as default",
+        "operationId": "set_default_system_prompt",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default system prompt set successfully"
+          },
+          "404": {
+            "description": "System prompt not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1395,6 +1661,40 @@
           },
           "recipe_source": {
             "type": "string"
+          }
+        }
+      },
+      "CreateSystemPromptRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "content"
+        ],
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "is_default": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "model_specific": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         }
       },
@@ -2600,6 +2900,20 @@
           }
         }
       },
+      "SearchPromptsRequest": {
+        "type": "object",
+        "required": [
+          "tags"
+        ],
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "SessionDisplayInfo": {
         "type": "object",
         "required": [
@@ -2805,6 +3119,17 @@
           }
         }
       },
+      "SetDefaultRequest": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        }
+      },
       "Settings": {
         "type": "object",
         "properties": {
@@ -2813,6 +3138,10 @@
             "nullable": true
           },
           "goose_provider": {
+            "type": "string",
+            "nullable": true
+          },
+          "system_prompt_id": {
             "type": "string",
             "nullable": true
           },
@@ -2888,6 +3217,80 @@
         "properties": {
           "msg": {
             "type": "string"
+          }
+        }
+      },
+      "SystemPrompt": {
+        "type": "object",
+        "description": "Represents a system prompt with metadata",
+        "required": [
+          "id",
+          "name",
+          "content",
+          "is_default",
+          "created_at",
+          "updated_at",
+          "tags"
+        ],
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string"
+          },
+          "is_default": {
+            "type": "boolean"
+          },
+          "model_specific": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SystemPromptResponse": {
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "properties": {
+          "prompt": {
+            "$ref": "#/components/schemas/SystemPrompt"
+          }
+        }
+      },
+      "SystemPromptsResponse": {
+        "type": "object",
+        "required": [
+          "prompts"
+        ],
+        "properties": {
+          "prompts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SystemPrompt"
+            }
           }
         }
       },
@@ -3075,6 +3478,34 @@
         "properties": {
           "cron": {
             "type": "string"
+          }
+        }
+      },
+      "UpdateSystemPromptRequest": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "model_specific": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           }
         }
       },

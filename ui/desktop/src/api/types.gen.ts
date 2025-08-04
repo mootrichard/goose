@@ -109,6 +109,15 @@ export type CreateScheduleRequest = {
     recipe_source: string;
 };
 
+export type CreateSystemPromptRequest = {
+    content: string;
+    description?: string | null;
+    is_default?: boolean | null;
+    model_specific?: string | null;
+    name: string;
+    tags?: Array<string> | null;
+};
+
 export type DecodeRecipeRequest = {
     deeplink: string;
 };
@@ -552,6 +561,10 @@ export type ScheduledJob = {
     source: string;
 };
 
+export type SearchPromptsRequest = {
+    tags: Array<string>;
+};
+
 export type SessionDisplayInfo = {
     accumulatedInputTokens?: number | null;
     accumulatedOutputTokens?: number | null;
@@ -647,9 +660,14 @@ export type SessionsQuery = {
     limit?: number;
 };
 
+export type SetDefaultRequest = {
+    id: string;
+};
+
 export type Settings = {
     goose_model?: string | null;
     goose_provider?: string | null;
+    system_prompt_id?: string | null;
     temperature?: number | null;
 };
 
@@ -676,6 +694,29 @@ export type SuccessCheck = {
 
 export type SummarizationRequested = {
     msg: string;
+};
+
+/**
+ * Represents a system prompt with metadata
+ */
+export type SystemPrompt = {
+    content: string;
+    created_at: string;
+    description?: string | null;
+    id: string;
+    is_default: boolean;
+    model_specific?: string | null;
+    name: string;
+    tags: Array<string>;
+    updated_at: string;
+};
+
+export type SystemPromptResponse = {
+    prompt: SystemPrompt;
+};
+
+export type SystemPromptsResponse = {
+    prompts: Array<SystemPrompt>;
 };
 
 export type TextContent = {
@@ -743,6 +784,14 @@ export type ToolResponse = {
 
 export type UpdateScheduleRequest = {
     cron: string;
+};
+
+export type UpdateSystemPromptRequest = {
+    content?: string | null;
+    description?: string | null;
+    model_specific?: string | null;
+    name?: string | null;
+    tags?: Array<string> | null;
 };
 
 export type UpsertConfigQuery = {
@@ -1610,6 +1659,226 @@ export type GetSessionHistoryResponses = {
 };
 
 export type GetSessionHistoryResponse = GetSessionHistoryResponses[keyof GetSessionHistoryResponses];
+
+export type ListSystemPromptsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/system-prompts';
+};
+
+export type ListSystemPromptsErrors = {
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type ListSystemPromptsResponses = {
+    /**
+     * List of system prompts
+     */
+    200: SystemPromptsResponse;
+};
+
+export type ListSystemPromptsResponse = ListSystemPromptsResponses[keyof ListSystemPromptsResponses];
+
+export type CreateSystemPromptData = {
+    body: CreateSystemPromptRequest;
+    path?: never;
+    query?: never;
+    url: '/system-prompts';
+};
+
+export type CreateSystemPromptErrors = {
+    /**
+     * Invalid request
+     */
+    400: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type CreateSystemPromptResponses = {
+    /**
+     * System prompt created successfully
+     */
+    201: SystemPromptResponse;
+};
+
+export type CreateSystemPromptResponse = CreateSystemPromptResponses[keyof CreateSystemPromptResponses];
+
+export type GetDefaultSystemPromptData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/system-prompts/default';
+};
+
+export type GetDefaultSystemPromptErrors = {
+    /**
+     * No default system prompt found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type GetDefaultSystemPromptResponses = {
+    /**
+     * Default system prompt
+     */
+    200: SystemPromptResponse;
+};
+
+export type GetDefaultSystemPromptResponse = GetDefaultSystemPromptResponses[keyof GetDefaultSystemPromptResponses];
+
+export type SearchSystemPromptsData = {
+    body: SearchPromptsRequest;
+    path?: never;
+    query?: never;
+    url: '/system-prompts/search';
+};
+
+export type SearchSystemPromptsErrors = {
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type SearchSystemPromptsResponses = {
+    /**
+     * Matching system prompts
+     */
+    200: SystemPromptsResponse;
+};
+
+export type SearchSystemPromptsResponse = SearchSystemPromptsResponses[keyof SearchSystemPromptsResponses];
+
+export type DeleteSystemPromptData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/system-prompts/{id}';
+};
+
+export type DeleteSystemPromptErrors = {
+    /**
+     * Cannot delete default prompt
+     */
+    400: unknown;
+    /**
+     * System prompt not found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type DeleteSystemPromptResponses = {
+    /**
+     * System prompt deleted successfully
+     */
+    200: unknown;
+};
+
+export type GetSystemPromptData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/system-prompts/{id}';
+};
+
+export type GetSystemPromptErrors = {
+    /**
+     * System prompt not found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type GetSystemPromptResponses = {
+    /**
+     * System prompt details
+     */
+    200: SystemPromptResponse;
+};
+
+export type GetSystemPromptResponse = GetSystemPromptResponses[keyof GetSystemPromptResponses];
+
+export type UpdateSystemPromptData = {
+    body: UpdateSystemPromptRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/system-prompts/{id}';
+};
+
+export type UpdateSystemPromptErrors = {
+    /**
+     * Invalid request
+     */
+    400: unknown;
+    /**
+     * System prompt not found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type UpdateSystemPromptResponses = {
+    /**
+     * System prompt updated successfully
+     */
+    200: SystemPromptResponse;
+};
+
+export type UpdateSystemPromptResponse = UpdateSystemPromptResponses[keyof UpdateSystemPromptResponses];
+
+export type SetDefaultSystemPromptData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/system-prompts/{id}/set-default';
+};
+
+export type SetDefaultSystemPromptErrors = {
+    /**
+     * System prompt not found
+     */
+    404: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type SetDefaultSystemPromptResponses = {
+    /**
+     * Default system prompt set successfully
+     */
+    200: unknown;
+};
 
 export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});

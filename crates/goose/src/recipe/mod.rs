@@ -135,6 +135,9 @@ pub struct Settings {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub temperature: Option<f32>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub system_prompt_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]

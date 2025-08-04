@@ -3,11 +3,22 @@ import { ToolSelectionStrategySection } from '../tool_selection_strategy/ToolSel
 import SchedulerSection from '../scheduler/SchedulerSection';
 import DictationSection from '../dictation/DictationSection';
 import { ResponseStylesSection } from '../response_styles/ResponseStylesSection';
+import SystemPromptsSection from '../system_prompts/SystemPromptsSection';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 
 export default function ChatSettingsSection() {
   return (
     <div className="space-y-4 pr-4 pb-8 mt-1">
+      <Card className="pb-2 rounded-lg">
+        <CardHeader className="pb-0">
+          <CardTitle className="">System Prompts</CardTitle>
+          <CardDescription>Manage custom system prompts for different use cases and models</CardDescription>
+        </CardHeader>
+        <CardContent className="px-2">
+          <SystemPromptsSection />
+        </CardContent>
+      </Card>
+
       <Card className="pb-2 rounded-lg">
         <CardHeader className="pb-0">
           <CardTitle className="">Mode</CardTitle>

@@ -33,6 +33,7 @@ interface UseChatEngineProps {
   onMessageStreamFinish?: () => void;
   onMessageSent?: () => void; // Add callback for when message is sent
   enableLocalStorage?: boolean;
+  systemPromptId?: string; // System prompt ID for chat sessions
 }
 
 export const useChatEngine = ({
@@ -41,6 +42,7 @@ export const useChatEngine = ({
   onMessageStreamFinish,
   onMessageSent,
   enableLocalStorage = false,
+  systemPromptId,
 }: UseChatEngineProps) => {
   const [lastInteractionTime, setLastInteractionTime] = useState<number>(Date.now());
   const [sessionTokenCount, setSessionTokenCount] = useState<number>(0);
@@ -63,6 +65,16 @@ export const useChatEngine = ({
     [enableLocalStorage]
   );
 
+  // Prepare the body with system prompt ID if provided
+  const body: Record<string, unknown> = {
+    session_id: chat.id,
+    session_working_dir: window.appConfig.get('GOOSE_WORKING_DIR'),
+  };
+  
+  if (systemPromptId) {
+    body.system_prompt_id = systemPromptId;
+  }
+
   const {
     messages,
     append: originalAppend,
@@ -82,7 +94,7 @@ export const useChatEngine = ({
     api: getApiUrl('/reply'),
     id: chat.id,
     initialMessages: chat.messages,
-    body: { session_id: chat.id, session_working_dir: window.appConfig.get('GOOSE_WORKING_DIR') },
+    body,
     onFinish: async (_message, _reason) => {
       window.electron.stopPowerSaveBlocker();
 
